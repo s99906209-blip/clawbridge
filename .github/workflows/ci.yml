@@ -1,5 +1,10 @@
 name: CI
 
+# GitHub Actions is disabled by default on forks. If this workflow shows
+# no run history after Actions is enabled in Settings, it needs one
+# push/PR event to register — this comment change (and its own CI run)
+# is that first event.
+
 on:
   push:
     branches: ['**']
