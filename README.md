@@ -26,6 +26,7 @@
 *   **📱 Mobile-First Dashboard**: Optimized for phone screens. View logs, stats, and controls without squinting.
 *   **🧠 Live Activity Feed**: Watch your agent "think" and execute tools in real-time. Features intelligent parallel logging (no missed background tasks) and deduplication.
 *   **💰 Token Economy**: Track daily/monthly LLM costs and usage trends. Know exactly where your money goes.
+*   **🔍 [Cost Control Center](docs/cost-control-center.md)**: 10 automated diagnostics that scan your usage, calculate savings, and let you apply optimizations with one tap. Cut API costs by 30–90%.
 *   **📜 Memory Timeline**: Browse your agent's daily journals and long-term memory evolution.
 *   **🚀 Mission Control**: Trigger cron jobs, restart services, or kill runaway scripts directly from the UI.
 *   **⚡ Zero-Config Remote**: 
@@ -80,6 +81,9 @@ docker pull ghcr.io/dreamwing/clawbridge:latest
 docker run -d --name clawbridge \
   -p 3000:3000 \
   -e ACCESS_KEY=your_secret_key \
+  -e OPENCLAW_STATE_DIR=/openclaw \
+  -e OPENCLAW_WORKSPACE=/openclaw/workspace \
+  -v ~/.openclaw:/openclaw:ro \
   -v ./data:/app/data \
   ghcr.io/dreamwing/clawbridge:latest
 ```
@@ -101,6 +105,7 @@ Special thanks to our community for helping improve ClawBridge:
 - [@斯图超哥](https://x.com/StewartLi666) for feedback on Linux compatibility, IP detection stability, and Quick Tunnel refresh logic (#12).
 - [@zjy4fun](https://github.com/zjy4fun) for valuable contributions in workspace detection fix (PR #22).
 - [@chrisuhg](https://github.com/chrisuhg) for valuable contributions in resolving installation and auth loop issues (Issue #19).
+- [@ForceConstant](https://github.com/ForceConstant) for valuable contributions in Feature Request: versioned docker images (#24) (Issue #24).
 
 ---
 *MIT License. Built for the OpenClaw Community.*

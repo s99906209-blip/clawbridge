@@ -26,6 +26,7 @@
 *   **📱 移动端优先**: 专为手机屏幕优化的 UI，随时随地查看日志和状态，无需缩放。
 *   **🧠 实时动态 (Live Activity)**: 像看朋友圈一样查看 Agent 的“思考”和“工具调用”。支持并行日志捕获（不会漏掉后台脚本）和智能去重。
 *   **💰 Token 经济学**: 精确追踪每日/每月的 LLM 成本和 Token 用量趋势。拒绝账单刺客。
+*   **🔍 [成本控制中心](docs/cost-control-center_CN.md)**: 10 项自动化诊断，扫描使用数据、计算节省空间，一键应用优化。可降低 API 成本 30–90%。
 *   **📜 记忆时间轴**: 浏览 Agent 的每日日志和长期记忆演变。
 *   **🚀 任务控制台**: 查看 Cron 定时任务状态，并支持从手机端手动触发脚本、重启服务或终止进程。
 *   **⚡ 零门槛远程**: 
@@ -77,6 +78,9 @@ docker pull ghcr.io/dreamwing/clawbridge:latest
 docker run -d --name clawbridge \
   -p 3000:3000 \
   -e ACCESS_KEY=您的安全密钥 \
+  -e OPENCLAW_STATE_DIR=/openclaw \
+  -e OPENCLAW_WORKSPACE=/openclaw/workspace \
+  -v ~/.openclaw:/openclaw:ro \
   -v ./data:/app/data \
   ghcr.io/dreamwing/clawbridge:latest
 ```
@@ -98,6 +102,7 @@ docker run -d --name clawbridge \
 - [@斯图超哥](https://x.com/StewartLi666) 提供关于 Linux 兼容性、IP 检测稳定性以及快速隧道刷新逻辑的反馈 (#12)。
 - [@zjy4fun](https://github.com/zjy4fun) 感谢其在 修复工作区检测问题 (PR #22) 中的贡献与建议。
 - [@chrisuhg](https://github.com/chrisuhg) 感谢其在 解决安装与授权重定向死循环 (Issue #19) 中的贡献与建议。
+- [@ForceConstant](https://github.com/ForceConstant) 感谢其在 功能请求：版本化的 docker 镜像 (#24) 中的贡献与建议 (Issue #24)。
 
 ---
 *MIT License. Built for the OpenClaw Community.*

@@ -16,6 +16,40 @@ const repoOwner = 'dreamwing';
 const repoName = 'clawbridge';
 const bumpType = process.argv[2] || 'patch';
 
+function findUnreleasedSection(lines) {
+    const start = lines.findIndex(line => line.trim() === '## [Unreleased]');
+    if (start === -1) return { start: -1, end: -1 };
+
+    let end = lines.findIndex((line, index) => index > start && /^## \[/.test(line));
+    if (end === -1) end = lines.length;
+    return { start, end };
+}
+
+function getUnreleasedContent(text) {
+    const lines = text.split('\n');
+    const { start, end } = findUnreleasedSection(lines);
+    if (start === -1) return '';
+
+    const sectionLines = lines.slice(start + 1, end);
+    while (sectionLines.length > 0 && sectionLines[0].trim() === '') sectionLines.shift();
+    while (sectionLines.length > 0 && sectionLines[sectionLines.length - 1].trim() === '') sectionLines.pop();
+    return sectionLines.join('\n').trim();
+}
+
+function replaceUnreleasedSection(text, newContent) {
+    const lines = text.split('\n');
+    const { start, end } = findUnreleasedSection(lines);
+    if (start === -1) return text;
+
+    const replacementLines = ['## [Unreleased]', ''];
+    if (newContent && newContent.trim()) {
+        replacementLines.push(...newContent.trim().split('\n'));
+        replacementLines.push('');
+    }
+
+    return [...lines.slice(0, start), ...replacementLines, ...lines.slice(end)].join('\n');
+}
+
 async function run() {
     console.log(`Starting release process (bump: ${bumpType})...`);
 
@@ -23,21 +57,26 @@ async function run() {
     const pkgPath = path.resolve('package.json');
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
     const currentVersion = pkg.version;
-    const newVersion = semver.inc(currentVersion, bumpType);
-    if (!newVersion) {
-        console.error('Invalid version bump');
-        process.exit(1);
-    }
+    let newVersion;
 
-    execSync(`npm version ${bumpType} --no-git-tag-version`);
-    console.log(`Bumped version from ${currentVersion} to ${newVersion}`);
+    if (bumpType === 'manual') {
+        newVersion = currentVersion;
+        console.log(`Using manual version: ${newVersion}`);
+    } else {
+        newVersion = semver.inc(currentVersion, bumpType);
+        if (!newVersion) {
+            console.error('Invalid version bump');
+            process.exit(1);
+        }
+        execSync(`npm version ${bumpType} --no-git-tag-version`);
+        console.log(`Bumped version from ${currentVersion} to ${newVersion}`);
+    }
 
     // 2. Read CHANGELOG.md [Unreleased] section
     const changelogPath = path.resolve('CHANGELOG.md');
     let changelog = fs.readFileSync(changelogPath, 'utf8');
 
-    const unreleasedMatch = changelog.match(/## \[Unreleased\]\s+([\s\S]*?)(?=\n+## \[|$)/);
-    let unreleasedContent = (unreleasedMatch && unreleasedMatch[1].trim()) ? unreleasedMatch[1].trim() : '';
+    let unreleasedContent = getUnreleasedContent(changelog);
 
     if (!unreleasedContent) {
         console.warn('No manual unreleased changes found in CHANGELOG.md, will auto-generate from commits/PRs...');
@@ -270,9 +309,9 @@ async function run() {
     const today = new Date().toISOString().split('T')[0];
     const newReleaseHeader = `## [${newVersion}] - ${today}`;
 
-    const newChangelog = changelog.replace(
-        /## \[Unreleased\]\s+([\s\S]*?)(?=\n+## \[|$)/,
-        `## [Unreleased]\n\n${newReleaseHeader}\n\n${processedEnglishContent}\n`
+    const newChangelog = replaceUnreleasedSection(
+        changelog,
+        `${newReleaseHeader}\n\n${processedEnglishContent}`
     );
     fs.writeFileSync(changelogPath, newChangelog, 'utf8');
 
@@ -282,9 +321,9 @@ async function run() {
     if (fs.existsSync(changelogCnPath)) {
         changelogCn = fs.readFileSync(changelogCnPath, 'utf8');
         if (changelogCn.includes('## [Unreleased]')) {
-            changelogCn = changelogCn.replace(
-                /## \[Unreleased\]\n\n[\s\S]*?(?=\n## \[|\n$|$)/,
-                `## [Unreleased]\n\n${newReleaseHeader}\n\n${translatedContent}\n`
+            changelogCn = replaceUnreleasedSection(
+                changelogCn,
+                `${newReleaseHeader}\n\n${translatedContent}`
             );
         } else {
             const headerIndex = changelogCn.indexOf('## [');
@@ -346,7 +385,8 @@ async function run() {
                                 formattedContributions.push(`${displayTitle} (#${c.num})`);
                             }
 
-                            const prefix = isChinese ? (c.isPR ? 'PR' : 'Issue') : (c.isPR ? 'PR' : 'Issue');
+                            const isPR = contributions.some(cont => cont.isPR);
+                            const prefix = isPR ? 'PR' : 'Issue';
                             const contributionText = isChinese
                                 ? `感谢其在 ${formattedContributions.join(', ')} 中的贡献与建议 (${prefix} #${contributions[0].num})。`
                                 : `for valuable contributions in ${formattedContributions.join(', ')} (${prefix} #${contributions[0].num}).`;
@@ -376,8 +416,22 @@ async function run() {
     execSync('git config user.email "github-actions[bot]@users.noreply.github.com"');
 
     try {
-        execSync('git add package.json package-lock.json CHANGELOG.md CHANGELOG_CN.md README.md README_CN.md');
-        execSync(`git commit -m "chore(release): v${newVersion}"`);
+        if (bumpType === 'manual') {
+            // In manual mode, assume user already pushed or we don't want to force-push their changes
+            // But we still need to tag and release. 
+            // We'll add the changelogs they might have missed
+            execSync('git add CHANGELOG.md CHANGELOG_CN.md README.md README_CN.md');
+            // If there are no changes to commit, git commit will fail. We handle it.
+            try {
+                execSync(`git commit -m "chore(release): v${newVersion} [skip ci]"`);
+            } catch (e) {
+                console.log('No new changes to commit for metadata.');
+            }
+        } else {
+            execSync('git add package.json package-lock.json CHANGELOG.md CHANGELOG_CN.md README.md README_CN.md');
+            execSync(`git commit -m "chore(release): v${newVersion}"`);
+        }
+        
         execSync(`git tag -a v${newVersion} -m "Release v${newVersion}"`);
         console.log('Pushing to remote...');
         execSync('git push origin master');
@@ -396,7 +450,7 @@ async function run() {
             repo: repoName,
             tag_name: `v${newVersion}`,
             name: `v${newVersion}`,
-            body: processedEnglishContent
+            body: `${processedEnglishContent}\n\n---\n\n${translatedContent}`
         });
         console.log('Release published successfully!');
     } catch (e) {

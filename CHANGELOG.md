@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-03-18
+
+### Fixed
+- resolve unclickable navigation icon issue (#36)
+- expose i18n helpers globally (#38)
+- allow i18n assets before auth
+
+### Changed
+- bump frontend asset cache keys
+
+## [1.2.2] - 2026-03-17
+
+### Added
+- include bilingual content in GitHub Release body
+
+## [1.2.1] - 2026-03-17
+
+### Added
+- automate release trigger on package.json version change
+- complete localization, fix logout security, and address final review comments (PR #31)
+- complete localization for Missions and System Settings (PR #31)
+- complete localization for main dashboard views (Home, Memory, Tokens, Settings) (PR #31)
+- implement i18n infrastructure and basic Chinese translations (PR #31)
+
+### Fixed
+- resolve persistent gitlink warnings (PR #31)
+- remove stubborn embedded gitlink from index (PR #31)
+- permanently remove embedded git repository reference (PR #31)
+- remove accidental gitlink and restore clean working directory (PR #31)
+
+## [1.2.0] - 2026-03-16
+
+### Added
+- **Cost Control Center**: A comprehensive dashboard for monitoring and optimizing token consumption.
+- **Optimizer Service**: Intelligent WebSocket-based flows to reduce costs with history and undo support.
+- **Diagnostics**: Real-time identification of cost-heavy patterns and actionable efficiency suggestions.
+- New interactive UI components for cost visualization and timeline details.
+
+### Fixed
+- Hardened WebSocket reliability in the optimizer.
+- Improved diagnostic handling and user feedback clarity.
+- Refined dashboard success messages and wording.
+
+## [1.1.4] - 2026-03-13
+
+### Fixed
+- short-circuit unsupported runtime paths
+- expose cron unavailability explicitly
+- tighten restricted endpoint handling
+- align unsupported monitor fields
+- clarify unsupported dashboard states
+- implement IS_DOCKER detection and disable host executions
+
+## [1.1.3] - 2026-03-10
+
+### Added
+- Docker image support: added `Dockerfile`, `.dockerignore`, and CI workflow for automatic image publishing to GitHub Container Registry (#24) (Thanks @ForceConstant for contribution and suggestions in Issue #24)
+- Docker usage instructions in README
+
+### Fixed
+- propagate --token and other CLI args from install.sh to setup.sh (PR #26)
 ## [1.1.2] - 2026-03-01
 
 ### Fixed
@@ -60,4 +121,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored installer (`setup.sh`) to remove magic link output in favor of secure login.
 - Refactored: split monolithic index.js (~600 lines) into modular src/ directory. (Thanks [@yaochao](https://github.com/yaochao) for suggesting #3)
 - Replaced `wget` with Node.js native `https` module for binary downloads. (Thanks [@yaochao](https://github.com/yaochao) for reporting #6)
-
